@@ -3,6 +3,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import pickle
+import os
 
 
 def weight_to_color(weight, max_weight):
@@ -10,9 +12,7 @@ def weight_to_color(weight, max_weight):
     norm_ratio = np.sqrt(weight / max_weight)
     norm_ratio = min(max(norm_ratio, 0), 1)
     rgba = cmap(norm_ratio)
-
-    # Ztmavení barvy
-    dark_factor = 0.9  # čím menší, tím tmavší
+    dark_factor = 0.9
     dark_rgba = tuple(channel * dark_factor for channel in rgba[:3])
     return f"#{int(dark_rgba[0]*255):02x}{int(dark_rgba[1]*255):02x}{int(dark_rgba[2]*255):02x}"
 
@@ -22,16 +22,19 @@ class SBBMapRenderer:
         self.graph = graph
 
     def render_map(self, center_lat=46.8, center_lon=8.3, zoom_start=7):
+        return self.render_map_up_to_step(step=None, center_lat=center_lat, center_lon=center_lon, zoom_start=zoom_start)
+
+    def render_map_up_to_step(self, step=None, batch_size=500, center_lat=46.8, center_lon=8.3, zoom_start=7):
         fmap = folium.Map(location=[center_lat, center_lon], zoom_start=zoom_start,
-                          #tiles=" CartoDB_DarkMatter", control_scale=True)
                           tiles="Stadia_StamenTonerLite", control_scale=True)
-                          #tiles="Jawg_Light", control_scale=True)
-                          #tiles="CartoDB_Positron", control_scale=True)
 
-        # Calculate max weight for scaling
         max_weight = max((data.get("weight", 1) for _, _, data in self.graph.edges(data=True)), default=1)
+        sqrt = math.sqrt
 
-        # Draw stations as points
+        edge_batches = list(self._batch_edges(batch_size))
+        total_steps = len(edge_batches) if step is None else step
+
+        # Always render all nodes (stations)
         for node, data in self.graph.nodes(data=True):
             lat = data.get("lat")
             lon = data.get("lon")
@@ -39,37 +42,36 @@ class SBBMapRenderer:
             if lat is not None and lon is not None:
                 folium.CircleMarker(
                     location=(lat, lon),
-                    radius=2,
-                    color="black",
-                    fill=False,
-                    fill_opacity=0.5,
-                    tooltip=folium.Tooltip(
-                        f"<b>{name}</b><br>Lat: {lat:.4f}<br>Lon: {lon:.4f}",
-                        sticky=True
-                    ),
+                    radius=3,
+                    color="grey",
+                    fill=True,
+                    fill_color="grey",
+                    fill_opacity=0.1,
+                    tooltip=folium.Tooltip(f"<b>{name}</b><br>Lat: {lat:.4f}<br>Lon: {lon:.4f}", sticky=True),
                     popup=folium.Popup(f"{name}", parse_html=True)
                 ).add_to(fmap)
-                """
-                folium.Marker(
-                location=(lat, lon),
-                icon=folium.Icon(color='black', icon='train', prefix='fa'),
-                popup=folium.Popup(name, parse_html=True)
-                ).add_to(fmap)
-                """
 
-        # Draw edges with color and thickness scaled by weight
-        for u, v, edge_data in self.graph.edges(data=True):
-            u_data = self.graph.nodes[u]
-            v_data = self.graph.nodes[v]
-            if all(k in u_data for k in ("lat", "lon")) and all(k in v_data for k in ("lat", "lon")):
-                weight = edge_data.get("weight", 1)
-                color = weight_to_color(weight, max_weight)
-                line_weight = 1 + 7 * math.sqrt(weight / max_weight)
-
-                folium.PolyLine(
-                    locations=[(u_data["lat"], u_data["lon"]), (v_data["lat"], v_data["lon"])],
-                    weight=line_weight,
-                    color=color,
-                    opacity=0.6
-                ).add_to(fmap)
+        for i, batch in enumerate(edge_batches):
+            if i >= total_steps:
+                break
+            for u, v, edge_data in batch:
+                u_data = self.graph.nodes[u]
+                v_data = self.graph.nodes[v]
+                if all(k in u_data for k in ("lat", "lon")) and all(k in v_data for k in ("lat", "lon")):
+                    weight = edge_data.get("weight", 1)
+                    if weight < 0.01 * max_weight:
+                        continue
+                    color = weight_to_color(weight, max_weight)
+                    line_weight = 1 + 7 * sqrt(weight / max_weight)
+                    folium.PolyLine(
+                        locations=[(u_data["lat"], u_data["lon"]), (v_data["lat"], v_data["lon"])],
+                        weight=line_weight,
+                        color=color,
+                        opacity=0.6
+                    ).add_to(fmap)
         return fmap
+
+    def _batch_edges(self, batch_size):
+        edges = list(self.graph.edges(data=True))
+        for i in range(0, len(edges), batch_size):
+            yield edges[i:i+batch_size]
