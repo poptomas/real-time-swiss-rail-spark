@@ -1,0 +1,13 @@
+--index-url https://pypi.org/simple
+pyspark==3.5.5
+matplotlib==3.10.3
+requests==2.32.3
+pandas==2.2.3
+streamlit==1.45.0
+setuptools
+wheel
+networkx
+folium
+streamlit-folium
+jinja2
+pyvis

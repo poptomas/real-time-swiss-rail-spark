@@ -1,0 +1,6 @@
+data/*
+local_run # name of my virtualenv
+output/*
+lib/*
+linie-mit-betriebspunkten.csv
+train_network.html
