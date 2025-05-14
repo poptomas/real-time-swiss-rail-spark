@@ -25,6 +25,7 @@ class SBBMapRenderer:
         fmap = folium.Map(location=[center_lat, center_lon], zoom_start=zoom_start,
                           #tiles=" CartoDB_DarkMatter", control_scale=True)
                           tiles="Stadia_StamenTonerLite", control_scale=True)
+                          #tiles="Jawg_Light", control_scale=True)
                           #tiles="CartoDB_Positron", control_scale=True)
 
         # Calculate max weight for scaling
@@ -45,8 +46,16 @@ class SBBMapRenderer:
                     tooltip=folium.Tooltip(
                         f"<b>{name}</b><br>Lat: {lat:.4f}<br>Lon: {lon:.4f}",
                         sticky=True
-                    )
+                    ),
+                    popup=folium.Popup(f"{name}", parse_html=True)
                 ).add_to(fmap)
+                """
+                folium.Marker(
+                location=(lat, lon),
+                icon=folium.Icon(color='black', icon='train', prefix='fa'),
+                popup=folium.Popup(name, parse_html=True)
+                ).add_to(fmap)
+                """
 
         # Draw edges with color and thickness scaled by weight
         for u, v, edge_data in self.graph.edges(data=True):
