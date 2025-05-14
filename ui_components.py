@@ -30,7 +30,7 @@ class SBBAppUI:
 
     def render(self):
         st.title("SBB Rail Network")
-        st.markdown("Explore the usage of the SBB rail network in Basel. Data is fetched in real-time from the Transport Data API.")
+        st.markdown("Explore the usage of the SBB rail network. Data is fetched in real-time from the Transport Data API.")
         st.markdown("Click on a station to see more information about its departures.")
         st.markdown("The map is updated automatically every single day, the data is fetched every minute.")
 
