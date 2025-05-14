@@ -51,25 +51,28 @@ class SBBAppUI:
         st.subheader("Stationboard Info")
 
         clicked_station = self.map_data.get("last_object_clicked_popup") or st.session_state.get("last_station") or "Basel SBB"
+        print(clicked_station)
         time_since_last_fetch = self.now - st.session_state["last_fetch_time"]
         station_changed = clicked_station != st.session_state["last_station"]
 
         if station_changed or time_since_last_fetch >= self.REFRESH_INTERVAL:
             st.session_state["last_station"] = clicked_station
             with st.spinner(f"Fetching departures for {clicked_station}..."):
-                df_stationboard, err = fetch_info(clicked_station)
+                df_stationboard, data, err = fetch_info(clicked_station)
                 st.session_state["stationboard_data"] = df_stationboard
                 st.session_state["stationboard_error"] = err
+                st.session_state["stationboard_json"] = data
                 st.session_state["last_fetch_time"] = self.now
 
         df_stationboard = st.session_state["stationboard_data"]
         err = st.session_state["stationboard_error"]
-
+        data = st.session_state["stationboard_json"]
         if err:
             st.error(err)
         elif df_stationboard is not None:
-            st.success(f"{clicked_station}")
+            st.subheader(f"Departures from {clicked_station}")
             st.dataframe(df_stationboard)
+            st.json(data, expanded=False)
 
         last_updated = datetime.datetime.fromtimestamp(st.session_state["last_fetch_time"]).strftime("%Y-%m-%d %H:%M:%S")
         st.info(f"Last updated at: {last_updated}")
