@@ -45,7 +45,7 @@ class SBBAppUI:
     def render_map(self):
         st.subheader("Rail Network Usage Heatmap")
         fmap = self.renderer.render_map_up_to_step(step=st.session_state["render_step"], batch_size=2000)
-        self.map_data = st_folium(fmap, width=900, height=700)
+        self.map_data = st_folium(fmap, width=1280, height=720)
 
     def render_stationboard(self):
         st.subheader("Stationboard Info")
