@@ -6,6 +6,7 @@ import math
 from branca.colormap import LinearColormap
 from functools import lru_cache
 
+
 API_KEY = "fd958bd8542a4d2f80e81546ebd00507"
 tile_layer = "https://{s}.tile.thunderforest.com/spinal-map/{z}/{x}/{y}{r}.png?apikey=fd958bd8542a4d2f80e81546ebd00507"
 attribution ="<a href=https://static1.thegamerimages.com/wordpress/wp-content/uploads/2025/02/kingdomcomedeliverance2henrymeme-1.jpg?q=70&fit=crop&w=1140&h=&dpr=1/>Click me</a>"
@@ -87,11 +88,15 @@ class SBBMapRenderer:
             yield edges[i:i+batch_size]
 
     def _add_colormap_legend(self, fmap, max_weight):
+        # Safety check for max_weight
+
         colormap = LinearColormap(
             colors=["#006837", "#ffffbf", "#a50026"],  # inverted for legend only
             vmin=1,
             vmax=max_weight,
             caption="Railway used today"
         )
-        colormap = colormap.to_step(index=np.linspace(0, max_weight, num=11))
+
+        thresholds = np.linspace(1, max_weight, num=11)
+        colormap = colormap.to_step(index=thresholds)
         colormap.add_to(fmap)

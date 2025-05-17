@@ -36,7 +36,7 @@ class SparkSBBDataLoader(AbstractSBBDataLoader):
     def __init__(self):
         self.spark = SparkSession.builder \
             .appName("SwissRailwayNetwork") \
-            .master("spark://localhost:7077") \
+            .master("spark://spark-master:7077") \
             .getOrCreate()
 
     def load_istdaten(self, path: str) -> pd.DataFrame:

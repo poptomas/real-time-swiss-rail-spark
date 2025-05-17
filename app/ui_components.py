@@ -14,7 +14,6 @@ class SBBAppUI:
         self.initialize_state()
 
     def initialize_state(self):
-        st.set_page_config(layout="wide")
         if "render_step" not in st.session_state:
             st.session_state["render_step"] = 1
         else:
@@ -72,7 +71,7 @@ class SBBAppUI:
         elif df_stationboard is not None:
             st.subheader(f"Departures from {clicked_station}")
             st.dataframe(df_stationboard)
-            st.json(data, expanded=False)
+            # DEBUG: st.json(data, expanded=False)
 
         last_updated = datetime.datetime.fromtimestamp(st.session_state["last_fetch_time"]).strftime("%Y-%m-%d %H:%M:%S")
         st.info(f"Last updated at: {last_updated}")
