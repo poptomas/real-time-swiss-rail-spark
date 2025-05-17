@@ -1,4 +1,5 @@
 from pyspark.sql import SparkSession
+from pyspark.sql.types import IntegerType
 from pyspark.sql.functions import col, to_timestamp
 import pandas as pd
 from abc import ABC, abstractmethod
@@ -39,19 +40,19 @@ class SparkSBBDataLoader(AbstractSBBDataLoader):
             .master("spark://spark-master:7077") \
             .getOrCreate()
 
-    def load_istdaten(self, path: str) -> pd.DataFrame:
-        df_spark = self.spark.read.option("header", True).option("sep", ";").csv(path)
-        df_spark = df_spark.filter((col("PRODUKT_ID") == "Zug") & (col("FAELLT_AUS_TF") == "False"))
-        df_spark = df_spark.withColumn("BPUIC", col("BPUIC").cast("int"))
-        df_spark = df_spark.withColumn("ANKUNFTSZEIT", to_timestamp(col("ANKUNFTSZEIT"), "dd.MM.yyyy HH:mm"))
-        df_spark = df_spark.withColumn("ABFAHRTSZEIT", to_timestamp(col("ABFAHRTSZEIT"), "dd.MM.yyyy HH:mm"))
-        return df_spark.toPandas()
+    def load_istdaten(self, path: str):
+        df = self.spark.read.csv(path, sep=";", header=True, inferSchema=True)
+        df = df.filter((col("PRODUKT_ID") == "Zug") & (col("FAELLT_AUS_TF") == "false"))
+        df = df.withColumn("BPUIC", col("BPUIC").cast(IntegerType()))
+        df = df.withColumn("ANKUNFTSZEIT", to_timestamp("ANKUNFTSZEIT"))
+        df = df.withColumn("ABFAHRTSZEIT", to_timestamp("ABFAHRTSZEIT"))
+        return df.toPandas()
 
-    def load_didok(self, path: str, valid_bpuics=None) -> pd.DataFrame:
-        df_spark = self.spark.read.option("header", True).option("sep", ";").csv(path)
-        df_spark = df_spark.withColumn("number", col("number").cast("int"))
-        df_spark = df_spark.filter(col("wgs84North").isNotNull() & col("wgs84East").isNotNull())
-        df_pandas = df_spark.toPandas().drop_duplicates(subset="number", keep="first")
+    def load_didok(self, path: str, valid_bpuics=None):
+        df = self.spark.read.csv(path, sep=";", header=True, inferSchema=True)
+        df = df.withColumn("number", col("number").cast(IntegerType()))
+        df = df.dropna(subset=["wgs84North", "wgs84East"])
+        df = df.dropDuplicates(["number"])
         if valid_bpuics is not None:
-            df_pandas = df_pandas[df_pandas["number"].isin(valid_bpuics)]
-        return df_pandas
+            df = df.filter(col("number").isin(valid_bpuics.tolist()))
+        return df.toPandas()

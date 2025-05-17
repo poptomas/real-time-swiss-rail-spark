@@ -1,10 +1,11 @@
 import os
+import shutil
 import pickle
 import requests
 import zipfile
 from datetime import datetime, timedelta
 import streamlit as st
-
+import networkx as nx
 from data_loader import AbstractSBBDataLoader, SparkSBBDataLoader
 from network_builder import SBBNetworkBuilder
 
@@ -58,10 +59,27 @@ class RemoteCSVDownloader:
             return None, False
 
 
+def cleanup(data_dir: str):
+    def delete_directory_contents(directory):
+        for filename in os.listdir(directory):
+            file_path = os.path.join(directory, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)  # delete file or symlink
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(f'Failed to delete {file_path}. Reason: {e}')
+    if os.path.exists(data_dir):
+        delete_directory_contents(data_dir)
+
+
 def load_or_build_graph(data_loader: AbstractSBBDataLoader):
     DATA_DIR = "/data" if isinstance(data_loader, SparkSBBDataLoader) else "./data"
-    GRAPH_CACHE_PATH = os.path.join(DATA_DIR, "cached_graph.pkl")
+    #cleanup(DATA_DIR)
+    GRAPH_CACHE_PATH = os.path.join(DATA_DIR, "cached_graph.graphml")
     os.makedirs(DATA_DIR, exist_ok=True)
+
     stations_downloader = RemoteCSVDownloader(
         base_url="https://data.opentransportdata.swiss/en/dataset/traffic-points-actual-date/permalink",
         zip_template="actual_date-world-traffic_point-{date}.csv.zip",
@@ -91,23 +109,23 @@ def load_or_build_graph(data_loader: AbstractSBBDataLoader):
         return None
 
     if os.path.exists(GRAPH_CACHE_PATH) and not (stations_downloaded or istdaten_downloaded):
-        with open(GRAPH_CACHE_PATH, "rb") as f:
-            st.markdown("Using cached graph.")
-            return pickle.load(f)
+        st.markdown("Using cached graph.")
+        nx.read_graphml(GRAPH_CACHE_PATH)
 
     st.markdown("Rebuilding graph from scratch...")
     df = data_loader.load_istdaten(istdaten_csv_path)
-
+    # DEBUG:
+    #st.dataframe(df)
     if not stations_csv_path:
         st.error("Could not fetch or locate station metadata dataset.")
         return None
 
     stations = data_loader.load_didok(stations_csv_path, valid_bpuics=df["BPUIC"].unique())
+    # DEBUG: 
+    #st.dataframe(stations)
     builder = SBBNetworkBuilder(df, stations)
     G = builder.build_graph()
 
-    with open(GRAPH_CACHE_PATH, "wb") as f:
-        pickle.dump(G, f)
-
+    nx.write_graphml(G, GRAPH_CACHE_PATH)
     st.markdown("Graph built and cached.")
     return G

@@ -5,6 +5,7 @@ import numpy as np
 import math
 from branca.colormap import LinearColormap
 from functools import lru_cache
+import streamlit as st
 
 
 API_KEY = "fd958bd8542a4d2f80e81546ebd00507"
@@ -38,6 +39,8 @@ class SBBMapRenderer:
                           control_scale=True, prefer_canvas=True)
 
         max_weight = max((data.get("weight", 1) for _, _, data in self.graph.edges(data=True)), default=1)
+        # DEBUG:
+        # st.markdown(max_weight)
         sqrt = math.sqrt
 
         edge_batches = list(self._batch_edges(batch_size))
@@ -88,7 +91,6 @@ class SBBMapRenderer:
             yield edges[i:i+batch_size]
 
     def _add_colormap_legend(self, fmap, max_weight):
-        # Safety check for max_weight
 
         colormap = LinearColormap(
             colors=["#006837", "#ffffbf", "#a50026"],  # inverted for legend only
