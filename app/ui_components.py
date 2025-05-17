@@ -1,16 +1,18 @@
 from streamlit_folium import st_folium
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 from fetch_data import fetch_info
-import time
 import datetime
+import pandas as pd
+from zoneinfo import ZoneInfo
+import time
 
 
 class SBBAppUI:
-    REFRESH_INTERVAL = 60
+    REFRESH_INTERVAL_MS = 60 * 1000  # 60 seconds
 
     def __init__(self, renderer):
         self.renderer = renderer
-        self.now = time.time()
         self.initialize_state()
 
     def initialize_state(self):
@@ -20,14 +22,22 @@ class SBBAppUI:
             st.session_state["render_step"] += 1
 
         if "last_station" not in st.session_state:
-            st.session_state["last_station"] = None
+            st.session_state["last_station"] = "Basel SBB"
         if "last_fetch_time" not in st.session_state:
             st.session_state["last_fetch_time"] = 0
         if "stationboard_data" not in st.session_state:
-            st.session_state["stationboard_data"] = None
-            st.session_state["stationboard_error"] = None
+            self.fetch_stationboard_data("Basel SBB")
+
+    def fetch_stationboard_data(self, station):
+        df, data, err = fetch_info(station)
+        st.session_state["stationboard_data"] = df
+        st.session_state["stationboard_error"] = err
+        st.session_state["last_fetch_time"] = time.time()
 
     def render(self):
+        # Autorefresh every 60 seconds
+        st_autorefresh(interval=self.REFRESH_INTERVAL_MS, key="stationboard_autorefresh")
+
         st.title("SBB Rail Network")
         st.markdown("Explore the usage of the SBB rail network. Data is fetched in real-time from the Transport Data API.")
         st.markdown("Click on a station to see more information about its departures.")
@@ -49,31 +59,21 @@ class SBBAppUI:
     def render_stationboard(self):
         st.subheader("Stationboard Info")
 
-        clicked_station = self.map_data.get("last_object_clicked_popup") or st.session_state.get("last_station") or "Basel SBB"
-        print(clicked_station)
-        time_since_last_fetch = self.now - st.session_state["last_fetch_time"]
-        station_changed = clicked_station != st.session_state["last_station"]
+        clicked_station = self.map_data.get("last_object_clicked_popup") or st.session_state.get("last_station", "Basel SBB")
+        self.fetch_stationboard_data(clicked_station)
 
-        if station_changed or time_since_last_fetch >= self.REFRESH_INTERVAL:
-            st.session_state["last_station"] = clicked_station
-            with st.spinner(f"Fetching departures for {clicked_station}..."):
-                df_stationboard, data, err = fetch_info(clicked_station)
-                st.session_state["stationboard_data"] = df_stationboard
-                st.session_state["stationboard_error"] = err
-                st.session_state["stationboard_json"] = data
-                st.session_state["last_fetch_time"] = self.now
+        df_stationboard = st.session_state.get("stationboard_data")
+        err = st.session_state.get("stationboard_error")
 
-        df_stationboard = st.session_state["stationboard_data"]
-        err = st.session_state["stationboard_error"]
-        data = st.session_state["stationboard_json"]
         if err:
             st.error(err)
         elif df_stationboard is not None:
             st.subheader(f"Departures from {clicked_station}")
             st.dataframe(df_stationboard)
-            # DEBUG: st.json(data, expanded=False)
 
-        last_updated = datetime.datetime.fromtimestamp(st.session_state["last_fetch_time"]).strftime("%Y-%m-%d %H:%M:%S")
+        last_updated = datetime.datetime.fromtimestamp(
+            st.session_state.get("last_fetch_time", time.time()), tz=ZoneInfo("Europe/Zurich")
+        ).strftime("%Y-%m-%d %H:%M:%S")
         st.info(f"Last updated at: {last_updated}")
 
 

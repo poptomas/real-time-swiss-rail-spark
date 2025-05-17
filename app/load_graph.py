@@ -110,7 +110,7 @@ def load_or_build_graph(data_loader: AbstractSBBDataLoader):
 
     if os.path.exists(GRAPH_CACHE_PATH) and not (stations_downloaded or istdaten_downloaded):
         st.markdown("Using cached graph.")
-        nx.read_graphml(GRAPH_CACHE_PATH)
+        return nx.read_graphml(GRAPH_CACHE_PATH)
 
     st.markdown("Rebuilding graph from scratch...")
     df = data_loader.load_istdaten(istdaten_csv_path)

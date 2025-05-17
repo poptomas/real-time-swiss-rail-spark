@@ -11,3 +11,4 @@ folium
 streamlit-folium
 jinja2
 pyvis
+streamlit-autorefresh
