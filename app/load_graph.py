@@ -76,7 +76,7 @@ def cleanup(data_dir: str):
 
 def load_or_build_graph(data_loader: AbstractSBBDataLoader):
     DATA_DIR = "/data" if isinstance(data_loader, SparkSBBDataLoader) else "./data"
-    #cleanup(DATA_DIR)
+    # cleanup(DATA_DIR)
     GRAPH_CACHE_PATH = os.path.join(DATA_DIR, "cached_graph.graphml")
     os.makedirs(DATA_DIR, exist_ok=True)
 
