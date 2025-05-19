@@ -32,7 +32,7 @@ class SBBMapRenderer:
 
         max_weight = max((data.get("weight", 1) for _, _, data in self.graph.edges(data=True)), default=1)
         # DEBUG:
-        st.markdown(max_weight)
+        # st.markdown(max_weight)
         
         sqrt = math.sqrt
 
@@ -89,7 +89,7 @@ class SBBMapRenderer:
             colors=["#006837", "#ffffbf", "#a50026"],  # inverted for legend only
             vmin=1,
             vmax=max_weight,
-            caption="Railway used today"
+            caption="Railway used in a day"
         )
 
         thresholds = np.linspace(1, max_weight, num=11)

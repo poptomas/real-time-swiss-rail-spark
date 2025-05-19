@@ -10,6 +10,35 @@ from data_loader import AbstractSBBDataLoader, SparkSBBDataLoader
 from network_builder import SBBNetworkBuilder
 
 
+import matplotlib.pyplot as plt
+
+@st.cache_resource  # caches the layout & figure between runs
+def compute_layout_and_fig(G, figsize=(8,8)):
+    # 1) compute a layout once
+    pos = nx.spring_layout(G, seed=42)  
+
+    # 2) create the figure & draw
+    fig, ax = plt.subplots(figsize=figsize)
+    nx.draw_networkx_nodes(G, pos,
+                           node_size=20,
+                           alpha=0.8,
+                           ax=ax)
+    nx.draw_networkx_edges(G, pos,
+                           width=0.5,
+                           alpha=0.5,
+                           ax=ax)
+    ax.set_axis_off()
+    return fig
+
+def visualize_graph(G):
+    if G is None or len(G) == 0:
+        st.warning("No graph to display.")
+        return
+
+    st.markdown("### Network visualization")
+    fig = compute_layout_and_fig(G, figsize=(10,10))
+    st.pyplot(fig)
+
 class RemoteCSVDownloader:
     def __init__(self, base_url: str, zip_template: str, data_dir: str, use_yesterday: bool = False):
         self.base_url = base_url
@@ -74,9 +103,10 @@ def cleanup(data_dir: str):
         delete_directory_contents(data_dir)
 
 
-def load_or_build_graph(data_loader: AbstractSBBDataLoader):
+def load_or_build_graph(data_loader: AbstractSBBDataLoader, del_last_run: bool = True):
     DATA_DIR = "/data" if isinstance(data_loader, SparkSBBDataLoader) else "./data"
-    #cleanup(DATA_DIR)
+    if del_last_run:
+        cleanup(DATA_DIR)
     GRAPH_CACHE_PATH = os.path.join(DATA_DIR, "cached_graph.graphml")
     os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -115,17 +145,18 @@ def load_or_build_graph(data_loader: AbstractSBBDataLoader):
     st.markdown("Rebuilding graph from scratch...")
     df = data_loader.load_istdaten(istdaten_csv_path)
     # DEBUG:
-    st.dataframe(df)
+    # st.dataframe(df)
     if not stations_csv_path:
         st.error("Could not fetch or locate station metadata dataset.")
         return None
 
     stations = data_loader.load_didok(stations_csv_path, valid_bpuics=df["BPUIC"].unique())
     # DEBUG: 
-    st.dataframe(stations)
+    # st.dataframe(stations)
     builder = SBBNetworkBuilder(df, stations)
     G = builder.build_graph()
 
     nx.write_graphml(G, GRAPH_CACHE_PATH)
     st.markdown("Graph built and cached.")
+
     return G

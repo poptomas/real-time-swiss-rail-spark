@@ -20,8 +20,12 @@ class PandasSBBDataLoader(AbstractSBBDataLoader):
         df = pd.read_csv(path, sep=";", low_memory=False)
         df = df[(df["PRODUKT_ID"] == "Zug") & (df["FAELLT_AUS_TF"] == False)]
         df["BPUIC"] = df["BPUIC"].astype(int)
-        df['ANKUNFTSZEIT'] = pd.to_datetime(df['ANKUNFTSZEIT'], errors='coerce')
-        df['ABFAHRTSZEIT'] = pd.to_datetime(df['ABFAHRTSZEIT'], errors='coerce')
+
+        # Correct date parsing
+        datetime_format = "%d.%m.%Y %H:%M"
+        df['ANKUNFTSZEIT'] = pd.to_datetime(df['ANKUNFTSZEIT'], format=datetime_format, errors='coerce')
+        df['ABFAHRTSZEIT'] = pd.to_datetime(df['ABFAHRTSZEIT'], format=datetime_format, errors='coerce')
+
         return df
 
     def load_didok(self, path: str, valid_bpuics=None) -> pd.DataFrame:
@@ -44,8 +48,12 @@ class SparkSBBDataLoader(AbstractSBBDataLoader):
         df = self.spark.read.csv(path, sep=";", header=True, inferSchema=True)
         df = df.filter((col("PRODUKT_ID") == "Zug") & (col("FAELLT_AUS_TF") == "false"))
         df = df.withColumn("BPUIC", col("BPUIC").cast(IntegerType()))
-        df = df.withColumn("ANKUNFTSZEIT", to_timestamp("ANKUNFTSZEIT"))
-        df = df.withColumn("ABFAHRTSZEIT", to_timestamp("ABFAHRTSZEIT"))
+
+        # Specify format explicitly
+        timestamp_format = "dd.MM.yyyy HH:mm"
+        df = df.withColumn("ANKUNFTSZEIT", to_timestamp("ANKUNFTSZEIT", timestamp_format))
+        df = df.withColumn("ABFAHRTSZEIT", to_timestamp("ABFAHRTSZEIT", timestamp_format))
+
         return df.toPandas()
 
     def load_didok(self, path: str, valid_bpuics=None):
