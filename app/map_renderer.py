@@ -72,7 +72,8 @@ class SBBMapRenderer:
                         locations=[(u_data["lat"], u_data["lon"]), (v_data["lat"], v_data["lon"])],
                         weight=line_weight,
                         color=color,
-                        opacity=0.7
+                        opacity=0.7,
+                        popup=folium.Popup(f"Count: {weight}", parse_html=True)
                     ).add_to(fmap)
 
         self._add_colormap_legend(fmap, max_weight)
