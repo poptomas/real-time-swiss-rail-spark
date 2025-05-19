@@ -103,7 +103,7 @@ def cleanup(data_dir: str):
         delete_directory_contents(data_dir)
 
 
-def load_or_build_graph(data_loader: AbstractSBBDataLoader, del_last_run: bool = True):
+def load_or_build_graph(data_loader: AbstractSBBDataLoader, del_last_run: bool = False):
     DATA_DIR = "/data" if isinstance(data_loader, SparkSBBDataLoader) else "./data"
     if del_last_run:
         cleanup(DATA_DIR)
