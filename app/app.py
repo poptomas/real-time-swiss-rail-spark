@@ -6,7 +6,7 @@ from data_loader import SparkSBBDataLoader, PandasSBBDataLoader
 import streamlit as st
 st.set_page_config(layout="wide")
 
-loader = PandasSBBDataLoader()
+loader = SparkSBBDataLoader()
 
 G = load_or_build_graph(loader)
 renderer = SBBMapRenderer(G)

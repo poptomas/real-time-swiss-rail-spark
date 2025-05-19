@@ -8,13 +8,6 @@ from functools import lru_cache
 import streamlit as st
 
 
-API_KEY = "fd958bd8542a4d2f80e81546ebd00507"
-#tile_layer = "https://{s}.tile.thunderforest.com/spinal-map/{z}/{x}/{y}{r}.png?apikey=fd958bd8542a4d2f80e81546ebd00507"
-tile_layer="https://tile.osm.ch/switzerland/{z}/{x}/{y}.png"
-attribution ="<a href=https://static1.thegamerimages.com/wordpress/wp-content/uploads/2025/02/kingdomcomedeliverance2henrymeme-1.jpg?q=70&fit=crop&w=1140&h=&dpr=1/>Click me</a>"
-
-map_layer = folium.TileLayer(tiles=tile_layer, attr=attribution, name="diablo tiles")
-
 def weight_to_color(weight, max_weight):
     cmap = plt.get_cmap("RdYlGn_r")  # back to original for edge coloring
     norm_ratio = np.sqrt(weight / max_weight)
@@ -35,13 +28,12 @@ class SBBMapRenderer:
     @lru_cache(maxsize=2)
     def render_map_up_to_step(self, step=None, batch_size=500, center_lat=46.8, center_lon=8.3, zoom_start=7):
         fmap = folium.Map(location=[center_lat, center_lon], zoom_start=zoom_start,
-                          #tiles="Stadia_StamenTonerLite", control_scale=True, prefer_canvas=True)
-                          tiles=map_layer,
-                          control_scale=True, prefer_canvas=True)
+                          tiles=" Stadia_OSMBright", control_scale=True, prefer_canvas=True)
 
         max_weight = max((data.get("weight", 1) for _, _, data in self.graph.edges(data=True)), default=1)
         # DEBUG:
-        # st.markdown(max_weight)
+        st.markdown(max_weight)
+        
         sqrt = math.sqrt
 
         edge_batches = list(self._batch_edges(batch_size))

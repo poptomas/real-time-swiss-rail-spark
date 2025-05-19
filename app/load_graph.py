@@ -76,7 +76,7 @@ def cleanup(data_dir: str):
 
 def load_or_build_graph(data_loader: AbstractSBBDataLoader):
     DATA_DIR = "/data" if isinstance(data_loader, SparkSBBDataLoader) else "./data"
-    # cleanup(DATA_DIR)
+    #cleanup(DATA_DIR)
     GRAPH_CACHE_PATH = os.path.join(DATA_DIR, "cached_graph.graphml")
     os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -115,14 +115,14 @@ def load_or_build_graph(data_loader: AbstractSBBDataLoader):
     st.markdown("Rebuilding graph from scratch...")
     df = data_loader.load_istdaten(istdaten_csv_path)
     # DEBUG:
-    #st.dataframe(df)
+    st.dataframe(df)
     if not stations_csv_path:
         st.error("Could not fetch or locate station metadata dataset.")
         return None
 
     stations = data_loader.load_didok(stations_csv_path, valid_bpuics=df["BPUIC"].unique())
     # DEBUG: 
-    #st.dataframe(stations)
+    st.dataframe(stations)
     builder = SBBNetworkBuilder(df, stations)
     G = builder.build_graph()
 
