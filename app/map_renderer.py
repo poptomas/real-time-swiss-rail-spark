@@ -62,18 +62,23 @@ class SBBMapRenderer:
             for u, v, edge_data in batch:
                 u_data = self.graph.nodes[u]
                 v_data = self.graph.nodes[v]
+                from_name = u_data.get("name", str(u))
+                to_name = v_data.get("name", str(v))
+
                 if all(k in u_data for k in ("lat", "lon")) and all(k in v_data for k in ("lat", "lon")):
                     weight = edge_data.get("weight", 1)
                     if weight < 0.01 * max_weight:
                         continue
                     color = weight_to_color(weight, max_weight)
                     line_weight = 1 + 5 * sqrt(weight / max_weight)  # more visible difference
+                    tooltip_text = f"{from_name} → {to_name} | Count: {weight}"
+
                     folium.PolyLine(
                         locations=[(u_data["lat"], u_data["lon"]), (v_data["lat"], v_data["lon"])],
                         weight=line_weight,
                         color=color,
                         opacity=0.7,
-                        popup=folium.Popup(f"Count: {weight}", parse_html=True)
+                        tooltip=folium.Tooltip(tooltip_text, sticky=True)
                     ).add_to(fmap)
 
         self._add_colormap_legend(fmap, max_weight)
