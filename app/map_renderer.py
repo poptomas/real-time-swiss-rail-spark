@@ -9,7 +9,8 @@ import streamlit as st
 
 
 API_KEY = "fd958bd8542a4d2f80e81546ebd00507"
-tile_layer = "https://{s}.tile.thunderforest.com/spinal-map/{z}/{x}/{y}{r}.png?apikey=fd958bd8542a4d2f80e81546ebd00507"
+#tile_layer = "https://{s}.tile.thunderforest.com/spinal-map/{z}/{x}/{y}{r}.png?apikey=fd958bd8542a4d2f80e81546ebd00507"
+tile_layer="https://tile.osm.ch/switzerland/{z}/{x}/{y}.png"
 attribution ="<a href=https://static1.thegamerimages.com/wordpress/wp-content/uploads/2025/02/kingdomcomedeliverance2henrymeme-1.jpg?q=70&fit=crop&w=1140&h=&dpr=1/>Click me</a>"
 
 map_layer = folium.TileLayer(tiles=tile_layer, attr=attribution, name="diablo tiles")
