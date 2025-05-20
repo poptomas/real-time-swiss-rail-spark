@@ -28,7 +28,7 @@ class SBBMapRenderer:
     @lru_cache(maxsize=2)
     def render_map_up_to_step(self, step=None, batch_size=500, center_lat=46.8, center_lon=8.3, zoom_start=7):
         fmap = folium.Map(location=[center_lat, center_lon], zoom_start=zoom_start,
-                          tiles=" Stadia_OSMBright", control_scale=True, prefer_canvas=True)
+                          tiles="OpenStreetMap", control_scale=True, prefer_canvas=True)
 
         max_weight = max((data.get("weight", 1) for _, _, data in self.graph.edges(data=True)), default=1)
         # DEBUG:
