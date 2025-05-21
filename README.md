@@ -83,6 +83,8 @@ Visit the app at: [http://localhost:8501](http://localhost:8501)
 - Updates every minute using Transport Open Data API  
 - Robustness maintained despite API rate limits (max 1000 calls/day)  
 
+![Swiss Train Network Map](img/swiss_map.png)
+
 ---
 
 ## Tech Stack
